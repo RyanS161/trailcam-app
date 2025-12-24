@@ -1,10 +1,17 @@
+#!/bin/zsh
+INPUT_FOLDER=$1
+
+# Build Docker image if it doesn't exist
+if ! docker image inspect wildlife-test >/dev/null 2>&1; then
+    docker build -t wildlife-test .
+fi
 
 
-PHOTOS_DIR="/Volumes/WILD_CAM/DCIM/100STLTH"
-OUTPUT_JSON="${PHOTOS_DIR}out.json"
-OUTPUT_HTML="${PHOTOS_DIR}out.html"
-VISUALIZATION_DIR="${PHOTOS_DIR}/viz"
+# Copy all images in INPUT_FOLDER to a temp directory
+mkdir -p ~/trailcams_output/temp
+find "$INPUT_FOLDER" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -exec cp {} ~/trailcams_output/temp/ \;
 
-uv run python -m speciesnet.scripts.run_model --folders ${PHOTOS_DIR} --predictions_json ${OUTPUT_JSON}
 
-uv run python -m megadetector.visualization.visualize_detector_output ${OUTPUT_JSON} ${VISUALIZATION_DIR} --detections_only --html_output_file ${OUTPUT_HTML}
+docker run --rm -v ~/trailcams_output:/working_volume wildlife-test
+
+rm ~/trailcams_output/temp/*

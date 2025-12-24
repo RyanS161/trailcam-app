@@ -98,10 +98,14 @@ def prepare_instances_dict(  # pylint: disable=too-many-positional-arguments
     )
 
 
+def make_dir(dir_name):
+    if not Path(dir_name).exists():
+        Path(dir_name).mkdir(parents=True, exist_ok=True)
+
 
 def main(input_folder, run_name):
-    OUTPUT_ROOT = str(Path.home() / "trailcams_output")
-    OUTPUT_FOLDER = str(OUTPUT_ROOT / f"run_{run_name}")
+    OUTPUT_ROOT = str("/working_volume")
+    OUTPUT_FOLDER = str(Path(OUTPUT_ROOT) / f"run_{run_name}")
     UNPROCESSED_FOLDER = str(Path(OUTPUT_FOLDER) / "unprocessed_images")
     OUTPUT_JSON = str(Path(OUTPUT_FOLDER) / "out.json")
     VIZ_DIR = str(Path(OUTPUT_FOLDER) / "detections_bboxes")
@@ -110,12 +114,11 @@ def main(input_folder, run_name):
 
 
     if not Path(input_folder).exists():
-        print(f"Root folder {input_folder} does not exist. Please check the path.")
+        print(f"Input folder {input_folder} does not exist. Please check the path.")
         return
     
-    for folder in [OUTPUT_FOLDER, UNPROCESSED_FOLDER, VIZ_DIR, DETECTIONS_DIR]:
-        if not Path(folder).exists():
-            Path(folder).mkdir(parents=True, exist_ok=True)
+
+    make_dir(OUTPUT_FOLDER)
 
     print("Scanning for image files...")
     all_image_files = find_all_image_files(input_folder)
@@ -123,6 +126,7 @@ def main(input_folder, run_name):
     total_unprocessed = len(all_image_files)
 
     print(f"Found {total_unprocessed} image files. Moving and renaming...")
+    make_dir(UNPROCESSED_FOLDER)
     move_and_rename_images(all_image_files, UNPROCESSED_FOLDER)
 
 
@@ -142,6 +146,7 @@ def main(input_folder, run_name):
 
     # move detections to detections folder
     print("Cleaning up non-detections...")
+    make_dir(DETECTIONS_DIR)
     total_detections = 0
     with open(OUTPUT_JSON, 'r') as f:
         predictions = json.load(f)
@@ -158,6 +163,7 @@ def main(input_folder, run_name):
 
     print(f"Total detections above confidence threshold {CONFIDENCE_THRESHOLD}: {total_detections} out of {total_unprocessed} images.")
 
+    make_dir(VIZ_DIR)
     visualize_detector_output(OUTPUT_JSON,
                             VIZ_DIR,
                             render_detections_only=True,
@@ -174,10 +180,6 @@ def main(input_folder, run_name):
     print("All done! See output folder for results:", OUTPUT_FOLDER)
     
 if __name__ == "__main__":
-    # Takes input folder as argument:
-
-
-
     parser = argparse.ArgumentParser(description="Process wildlife images with SpeciesNet.")
     parser.add_argument("input_folder", help="Path to the input folder containing images")
     parser.add_argument("--run_name", default=time.strftime('%Y%m%d_%H%M%S'), help="Run name (default: current timestamp)")
