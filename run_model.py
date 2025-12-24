@@ -23,11 +23,7 @@ def run_model(instances_dict, predictions_json) -> None:
 
     # Set running mode.
     run_mode: Literal["multi_thread", "multi_process"] = _RUN_MODE  # type: ignore
-    # Only set start method if not already set
-    try:
-        mp.set_start_method("spawn")
-    except RuntimeError:
-        pass
+    mp.set_start_method("spawn")
 
     # Make predictions.
     model = SpeciesNet(
